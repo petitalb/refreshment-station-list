@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Grist Invoice</title>
+
+    <!-- A template for showing an invoice in a Custom Widget in Grist. -->
+    <!-- Uses Vue.js, moment, and the Grist Plugin API -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.3/vue.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.27.0/moment.min.js"></script>
+    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+
+    <script src="invoice.js?ver=11"></script>
+    <script src="exampleData.js"></script>
+
+    <link rel="stylesheet" href="invoice.css?ver=17">
+  </head>
+  <body>
+    <div id="app">
+      <div class="status" v-if="status">
+        <template v-if="status === 'waiting'">
+          <p>Waiting for data...</p>
+          <ul>
+            <li v-bind:class="[tableConnected ? 'done' : '']">I need <b>read table</b> access.</li>
+            <li v-bind:class="[haveRows ? 'done' : '']">I need at least one row of data.</li>
+            <li v-bind:class="[rowConnected ? 'done' : '']">I need <b>Select By</b> set.</li>
+          </ul>
+          <p>Examples:</p>
+          <ul>
+            <li><a class="button" href="index.html?demo=1">A filled out invoice</a></li>
+            <li><a class="button" href="index.html?labels=1">A labelled invoice</a></li>
+          </ul>
+        </template>
+        <template v-else>
+          {{ status }}
+        </template>
+      </div>
+      <template v-if="invoice">
+        <div class="top">
+          <div class="block">
+            <div class="header">
+              <div class="meta title">Fiche Nourriture</div>
+            </div>
+<div style="display: grid;grid-template-columns: 1fr 1fr;">
+<div style="min-width: 500px; padding-inline: 5px">
+            <div class="refreshment-station" v-for="ravito in (invoice.Ravitaillement ? [invoice.Ravitaillement] : [])">
+              <div class="title">{{ ravito.Nom }} <span v-if="invoice.Course">- {{ invoice.Course.Nom }}</span></div>
+              <div class="details">
+                <div><span class="meta">Adresse</span> : {{ ravito.Adresse }}</div>
+                <div class="chefs">
+                  <div style="padding-top: 10px"><span class="meta">Contacts</span> :</div>
+                  <div class="details" v-for="benevole in invoice.ChefsDePoste">
+                    <template v-if="typeof(benevole) === 'string'">
+                      <div class="newlined">- {{ benevole }}</div>
+                    </template>
+                    <template v-else>
+                      <div>- {{ benevole.Prenom }} {{ benevole.Nom }} ({{ benevole.Poste }}) : {{ benevole.Telephone }}</div>
+                    </template>
+                  </div>
+                 </div>
+              </div>
+            </div>
+</div>
+<div style="min-width: 500px; padding-inline: 5px">
+            <div class="refreshment-station">
+              <div class="title">Référent.es logistique</div>
+              <div class="details">
+                <div class="chefs">
+                  <div style="padding-top: 10px"><span class="meta">Contacts</span> :</div>
+                  <div class="details" v-for="benevole in invoice.ChefsDePoste">
+                    <template v-if="typeof(benevole) === 'string'">
+                      <div class="newlined">- {{ benevole }}</div>
+                    </template>
+                    <template v-else>
+                      <div>- {{ benevole.Prenom }} {{ benevole.Nom }} ({{ benevole.Poste }}) : {{ benevole.Telephone }}</div>
+                    </template>
+                  </div>
+                 </div>
+              </div>
+
+            </div>
+</div>
+</div>
+            <div class="info" v-if="invoice.Issued"><div class="meta date-tag">Exporté</div> {{ invoice.Issued | asDate }}</div>
+          </div>
+          
+          <div class="logo">
+            <img src="https://ut4m.fr/sites/all/themes/ut4m/images/home/Logo-Ut4M-2023.png" alt="Ut4M - Ultra Tour des 4 Massifs" width="147px">
+          </div>
+
+        </div>
+
+        <table class="items">
+          <tr>
+            <th style="min-width: 350px">Produit</th>
+            <th class="number">Quantité</th>
+            <th>Conditionnement</th>
+            <th>Commentaire</th>
+            <th style="min-width: 350px">Produit</th>
+            <th class="number">Quantité</th>
+            <th>Conditionnement</th>
+            <th>Commentaire</th>
+          </tr>
+          <tr v-for="(product,index) in invoice.Nourriture.slice(0, Math.ceil(invoice.Nourriture.length/2))" :set="product1 = invoice.Nourriture[Math.ceil(invoice.Nourriture.length/2)+index]"
+>
+            <template v-for="e in [product, product1]" v-if="e">
+              <td>{{ e.Nom }}</td>
+              <td>{{ e.Quantite }}</td>
+              <td>{{ e.Conditionnement }}</td>
+              <td>{{ e.Commentaire }}</td>
+            </template>
+            <template v-else>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </template>
+          </tr>
+        </table>
+
+        <template v-if="invoice.Note">
+          <p class="note">{{ invoice.Note }}</p>
+        </template>
+
+        <template v-for="help in (invoice.Help ? [invoice.Help] : [])">
+          <div class="help">
+            <div class="help-close">
+              Add <span class="column-name">Due</span> or <span class="column-name">Issued</span> date to hide this help.
+            </div>
+            <div class="title">Column information</div>
+            <div class="details">
+              <table>
+                <tr v-for="group in ['recognized', 'expected', 'ignored']">
+                  <td class="key">{{ group }}</td>
+                  <td>
+                    <template v-if="group in help">
+                      <div v-bind:class="['column-name', 'column-' + group]" v-for="col in help[group]">{{col}}</div>
+                    </template>
+                    <template v-else>
+                      &mdash;
+                    </template>
+                  </td>
+                </tr>
+              </table>
+              <template v-if="invoice.SuggestReferencesColumn">
+                <div>For structured address and item information, add a <span class="column-name">References</span> column with this formula:</div>
+                <div>
+                  <pre>RECORD(rec, expand_refs=1)</pre>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        <div class="footer">
+          Association GRENOBLE OUTDOOR AVENTURE - Maison des Associations de Seyssins<br/>
+          8 rue Joseph Moutin, 38180 Seyssins
+        </div>
+
+        <div class="print">
+          <a href="javascript:window.print()">Print</a>
+        </div>
+      </template>
+    </div>
+  </body>
+</html>

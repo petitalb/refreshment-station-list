@@ -1,0 +1,14 @@
+{
+  "name": "@petitalb/refreshment-station-list",
+  "description": "A template for showing an invoice in a Custom Widget in Grist.",
+  "homePage": "https://github.com/petitalb/refreshment-station-list",
+  "version": "0.0.2",
+  "grist": {
+    "name": "Refreshment Station List",
+    "url": "https://gristlabs.github.io/grist-widget/refreshment-station-list",
+    "widgetId": "@petitalb/refreshment-station-list",
+    "published": true,
+    "accessLevel": "read table",
+    "renderAfterReady": true
+  }
+}
